@@ -6,27 +6,23 @@ type Model struct {
     Stream              bool
 }
 
-type ChatRequest struct {
+type ModelRequest struct {
     Model               string          `json:"model"`
-    Messages            []ChatMessage   `json:"messages"`
+    Prompt              string          `json:"prompt"`
     Stream              bool            `json:"stream"`
 }
 
-type ChatMessage struct {
-    Role                string          `json:"role"`
-    Content             string          `json:"content"`
+type ModelResponse struct {
+	Model               string          `json:"model"`
+	CreatedAt           string          `json:"created_at"`
+	Response            string          `json:"response"`
+	Done                bool            `json:"done"`
+	Context             []int           `json:"context"`
+	TotalDuration       int             `json:"total_duration"`
+	LoadDuration        int             `json:"load_duration"`
+	PromptEvalCount     int             `json:"prompt_eval_count"`
+	PromptEvalDuration  int             `json:"prompt_eval_duration"`
+	EvalCount           int             `json:"eval_count"`
+	EvalDuration        int             `json:"eval_duration"`
 }
 
-type ChatResponse struct {
-    Model               string          `json:"Model"`
-    CreatedAt           string          `json:"created_at"`
-    Message             ChatMessage     `json:"message"`
-    DoneReason          string          `json:"done_reason"`
-    Done                bool            `json:"done"`
-    TotalDuration       int             `json:"total_duration"`
-    LoadDuration        int             `json:"load_duration"`
-    PromptEvalCount     int             `json:"prompt_eval_count"`
-    PromptEvalDuration  int             `json:"prompt_eval_duration"`
-    EvalCount           int             `json:"eval_count"`
-    EvalDuration        int             `json:"eval_duration"`
-}

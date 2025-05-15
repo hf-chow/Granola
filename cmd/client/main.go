@@ -90,7 +90,13 @@ func main() {
 
     go func() {
         for d := range msgs {
-            log.Printf(" [x] %s", d.Body)
+            log.Printf(" [x] receive prompt %s", d.Body)
+            modelResp, err := m.Prompt(d.Body)
+            if err != nil {
+                log.Printf(" [x] model failed to generate a response: %s", err)
+            }
+            log.Printf(" [x] model: %s", modelResp.Model)
+            log.Printf(" [x] model response: %s", modelResp.Response)
         }
     }()
 

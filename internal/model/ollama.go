@@ -26,8 +26,8 @@ func ServeOllamaModel(name string, stream bool) (Model, error){
 
     m := Model{
         Name:           name,
-        Stream:         false,
         Endpoint:       "http://localhost:11434/api/generate",
+        Stream:         false,
     }
 
     return m, nil
@@ -52,34 +52,34 @@ func pullOllamaModel(name string) error {
     return nil
 }
 
-func (m *Model) Prompt(msg ChatMessage) (ChatResponse, error) {
-    msgs := []ChatMessage{}
-    msgs = append(msgs, msg)
 
+func (m *Model) Prompt(p []byte) (ModelResponse, error) {
+    log.Print(string(p))
     dat, err := json.Marshal(
-        ChatRequest{
+        ModelRequest{
             Model:      m.Name,
-            Messages:   msgs,
+            Prompt:     string(p),
             Stream:     m.Stream,
         })
     if err != nil {
-        return ChatResponse{}, err
+        return ModelResponse{}, err
     }
     buf := bytes.NewBuffer(dat)
     resp, err := http.Post(m.Endpoint, "application/json", buf)
     if err != nil {
-        return ChatResponse{}, err
+        return ModelResponse{}, err
     }
     defer resp.Body.Close()
     body, err := io.ReadAll(resp.Body)
     if err != nil {
-        return ChatResponse{}, err
+        return ModelResponse{}, err
     }
-    var chatResp ChatResponse
-    err = json.Unmarshal(body, &chatResp)
+    var modelResp ModelResponse
+    err = json.Unmarshal(body, &modelResp)
     if err != nil {
-        return ChatResponse{}, err
+        log.Printf("failed to unmarshal model response, %s", err)
+        return ModelResponse{}, err
     }
-    return chatResp, nil
+    return modelResp, nil
 }
 
