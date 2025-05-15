@@ -1,14 +1,27 @@
 package model
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os/exec"
 )
 
 func ServeOllamaModel() error{
-    err := stopOl
+    err := stopOllama()
+    if err != nil {
+        return err
+    }
+    cmd := exec.Command("bash", "-c", "ollama serve")
+    err = cmd.Start()
+    if err != nil {
+        return err
+    }
+    return nil
 }
 
 func stopOllama() error {
@@ -29,3 +42,35 @@ func pullOllamaModel(name string) error {
     }
     return nil
 }
+
+func (m *Model) prompt(msg ChatMessage) (ChatResponse, error) {
+    msgs := []ChatMessage{}
+    msgs = append(msgs, msg)
+
+    dat, err := json.Marshal(
+        ChatRequest{
+            Model:      m.Name,
+            Messages:   msgs,
+            Stream:     m.Stream,
+        })
+    if err != nil {
+        return ChatResponse{}, err
+    }
+    buf := bytes.NewBuffer(dat)
+    resp, err := http.Post(m.Endpoint, "application/json", buf)
+    if err != nil {
+        return ChatResponse{}, err
+    }
+    defer resp.Body.Close()
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return ChatResponse{}, err
+    }
+    var chatResp ChatResponse
+    err = json.Unmarshal(body, &chatResp)
+    if err != nil {
+        return ChatResponse{}, err
+    }
+    return chatResp, nil
+}
+
