@@ -11,21 +11,30 @@ import (
 	"os/exec"
 )
 
-func ServeOllamaModel() error{
+func ServeOllamaModel(name string, stream bool) (Model, error){
     err := stopOllama()
     if err != nil {
-        return err
+        return Model{}, err
     }
     cmd := exec.Command("bash", "-c", "ollama serve")
     err = cmd.Start()
     if err != nil {
-        return err
+        return Model{}, err
     }
-    return nil
+    cmd = exec.Command("bash", fmt.Sprintf("ollama run %s", name))
+    err = cmd.Run()
+
+    m := Model{
+        Name:           name,
+        Stream:         false,
+        Endpoint:       "http://localhost:11434/api/generate",
+    }
+
+    return m, nil
 }
 
 func stopOllama() error {
-    cmd := exec.Command("bash", "-c", "pkill -f ollama")
+    cmd := exec.Command("bash", "-c", "sudo systemctl stop ollama.service")
     err := cmd.Run()
     if err != nil {
         return errors.New(fmt.Sprintf("failed to stop ollama: %s", err))
@@ -43,7 +52,7 @@ func pullOllamaModel(name string) error {
     return nil
 }
 
-func (m *Model) prompt(msg ChatMessage) (ChatResponse, error) {
+func (m *Model) Prompt(msg ChatMessage) (ChatResponse, error) {
     msgs := []ChatMessage{}
     msgs = append(msgs, msg)
 
