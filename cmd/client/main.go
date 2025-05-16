@@ -157,7 +157,7 @@ func main() {
                     return 
                 }
                 log.Printf(" [x] receive prompt %s", d.Body)
-                modelResp, err := agent.Model.Prompt(d.Body)
+                modelResp, err := agent.Respond(d.Body)
                 if err != nil {
                     log.Printf(" [x] model failed to generate a response: %s", err)
                     continue
