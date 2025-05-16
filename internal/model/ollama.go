@@ -13,7 +13,7 @@ import (
 )
 
 func ServeOllamaModel(name, port string, stream bool) (Model, error){
-    err := stopOllama()
+    err := StopOllamaService()
     if err != nil {
         return Model{}, err
     }
@@ -36,7 +36,7 @@ func ServeOllamaModel(name, port string, stream bool) (Model, error){
     return m, nil
 }
 
-func stopOllama() error {
+func StopOllamaService() error {
     cmd := exec.Command("bash", "-c", "sudo systemctl stop ollama.service")
     err := cmd.Run()
     if err != nil {

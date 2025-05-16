@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	agent "github.com/hf-chow/tofu/internal/agent"
 	model "github.com/hf-chow/tofu/internal/model"
@@ -142,21 +144,37 @@ func main() {
         log.Fatalf("failed to register a consumer: %s", err)
     }
 
-    var forever chan struct{}
+    sigChan := make(chan os.Signal, 1)
+    signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+    shutdown := make(chan struct{})
 
     go func() {
-        for d := range msgs {
-            log.Printf(" [x] receive prompt %s", d.Body)
-            modelResp, err := agent.Model.Prompt(d.Body)
-            if err != nil {
-                log.Printf(" [x] model failed to generate a response: %s", err)
+        for {
+            select {
+            case d, ok := <-msgs: 
+                if !ok {
+                    log.Fatal("Message channel closed")
+                    return 
+                }
+                log.Printf(" [x] receive prompt %s", d.Body)
+                modelResp, err := agent.Model.Prompt(d.Body)
+                if err != nil {
+                    log.Printf(" [x] model failed to generate a response: %s", err)
+                    continue
+                }
+                log.Printf(" [x] model response: %s", modelResp.Response)
+            case <- shutdown:
+                log.Println("Shutting down consumer...")
+                return
             }
-            log.Printf(" [x] model: %s", modelResp.Model)
-            log.Printf(" [x] model response: %s", modelResp.Response)
         }
     }()
 
     log.Printf(" [*] Waiting for logs. To exit press CTRL+C")
-    <- forever
+    <- sigChan
+
+    log.Printf("Recieved interrupt, shutting down...")
+    close(shutdown)
+    model.StopOllamaService()
 }
 
