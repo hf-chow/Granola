@@ -2,14 +2,12 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	agent "github.com/hf-chow/tofu/internal/agent"
 	model "github.com/hf-chow/tofu/internal/model"
@@ -24,39 +22,6 @@ func makeBody(args []string) string {
         s = strings.Join(args[1:], " ")
     }
     return s
-}
-
-func publish(topic, prompt string, ch *amqp.Channel) {
-    err := ch.ExchangeDeclare(
-        topic,                      // name
-        "topic",                    // type
-        true,                       // durable
-        false,                      // auto-deleted
-        false,                      // internal
-        false,                      // no-wait
-        nil,                        // arugments
-    )
-    if err != nil {
-        log.Fatalf("failed to declare an exchange: %s", err)
-    }
-
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
-
-    err = ch.PublishWithContext(
-        ctx,
-        topic,                      // exchange
-        "",                         // routing key
-        false,                      // mandatory
-        false,                      // immediate
-        amqp.Publishing {
-            ContentType: "text/plain",
-            Body:        []byte(prompt),
-        })
-    if err != nil {
-        log.Fatalf("failed to publish a message: %s", err)
-    }
-    log.Printf(" [x] Prompt sent: %s\n", prompt)
 }
 
 func main() {
@@ -76,6 +41,7 @@ func main() {
     if err != nil {
         log.Fatalf("failed initialize agent %s: %s", agent.Name, err)
     }
+    agent.Channel = ch
 
     shutdown := make(chan struct{})
     sigChan := make(chan os.Signal, 1)

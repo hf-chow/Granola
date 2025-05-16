@@ -50,7 +50,6 @@ func pullOllamaModel(name string) error {
     return nil
 }
 
-
 func (m *Model) Prompt(p []byte) (ModelResponse, error) {
     log.Print(string(p))
     dat, err := json.Marshal(

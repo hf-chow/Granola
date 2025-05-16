@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -37,44 +36,12 @@ func parse() (string, string) {
         log.Println("Valid port numbers: 1024 - 49151")
         os.Exit(0)
     }
-        
     return os.Args[1], os.Args[2]
-}
-
-func initAgent(name, port string) (agent.Agent, error){
-    var agent agent.Agent
-    agent.Name = name
-
-    switch agent.Name {
-    case "qa":
-        log.Println("Initializing QA Agent")
-        agent.Topic = "quest_ans"
-    case "pq":
-        log.Println("Initializing PQ Agent")
-        agent.Topic = "prod_query"
-    case "ps":
-        log.Println("Initializing PS Agent")
-        agent.Topic = "prod_search"
-    }
-
-    fmt.Println("Starting agent client...")
-
-    m, err := model.ServeOllamaModel("gemma3:1b", port, false)
-    if err != nil {
-        log.Fatalf("failed to serve model %s: %s", m.Name, err)
-        return agent, err
-    }
-
-    agent.Model = m
-
-    log.Printf(" [*] Serving model %s on endpoint %s", m.Name, m.Endpoint)
-
-    return agent, nil
 }
 
 func main() {
     agentName, agentPort := parse()
-    agent, err := initAgent(agentName, agentPort)
+    agent, err := agent.InitAgent(agentName, agentPort)
     if err != nil {
         log.Fatalf("failed initialize agent %s: %s", agentName, err)
     }
