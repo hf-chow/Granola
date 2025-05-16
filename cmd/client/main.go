@@ -1,21 +1,83 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strconv"
 
+	agent "github.com/hf-chow/tofu/internal/agent"
+	model "github.com/hf-chow/tofu/internal/model"
 	amqp "github.com/rabbitmq/amqp091-go"
-    model "github.com/hf-chow/tofu/internal/model"
 )
 
-func main() {
-    m, err := model.ServeOllamaModel("gemma3:1b", false)
+const connString = "amqp://guest:guest@localhost:5672/"
+
+func parse() (string, string) {
+    if len(os.Args) < 3 {
+        log.Printf("Usage: %s [agent_name] [port]...", os.Args[0])
+        os.Exit(0)
+    }
+
+    if (os.Args[1] != "qa" && os.Args[1] != "pq" && os.Args[1] != "ps") {
+        log.Println("Valid agent names: [qa, pq, ps]")
+        os.Exit(0)
+    }
+
+    portStr := os.Args[2]
+    port, err := strconv.Atoi(portStr)
+    if err != nil {
+        log.Println("Port number has to be numeric intergers within [1024 - 49151]")
+        os.Exit(0)
+    }
+
+    if (port < 1024 || port > 49151) {
+        log.Println("Valid port numbers: 1024 - 49151")
+        os.Exit(0)
+    }
+        
+    return os.Args[1], os.Args[2]
+}
+
+func initAgent(name, port string) (agent.Agent, error){
+    var agent agent.Agent
+    agent.Name = name
+
+    switch agent.Name {
+    case "qa":
+        log.Println("Initializing QA Agent")
+        agent.Topic = "quest_ans"
+    case "pq":
+        log.Println("Initializing PQ Agent")
+        agent.Topic = "prod_query"
+    case "ps":
+        log.Println("Initializing PS Agent")
+        agent.Topic = "prod_search"
+    }
+
+    fmt.Println("Starting agent client...")
+
+    m, err := model.ServeOllamaModel("gemma3:1b", port, false)
     if err != nil {
         log.Fatalf("failed to serve model %s: %s", m.Name, err)
+        return agent, err
     }
-    log.Printf("serving model %s on endpoint %s", m.Name, m.Endpoint)
 
-    conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+    agent.Model = m
+
+    log.Printf(" [*] Serving model %s on endpoint %s", m.Name, m.Endpoint)
+
+    return agent, nil
+}
+
+func main() {
+    agentName, agentPort := parse()
+    agent, err := initAgent(agentName, agentPort)
+    if err != nil {
+        log.Fatalf("failed initialize agent %s: %s", agentName, err)
+    }
+
+    conn, err := amqp.Dial(connString)
     if err != nil {
         log.Fatalf("failed to connect to Rabbitmq: %s", err)
     }
@@ -28,7 +90,7 @@ func main() {
     defer ch.Close()
 
     err = ch.ExchangeDeclare(
-        "logs_topic",   // name
+        agent.Topic,    // name
         "topic",        // type
         true,           // durable
         false,          // auto-deleted
@@ -44,7 +106,7 @@ func main() {
         "",             // name
         false,          // duarable
         false,          // delete when unused
-        true,          // exclusive
+        true,           // exclusive
         false,          // no-wait
         nil,            // arguments
     )
@@ -52,25 +114,19 @@ func main() {
         log.Fatalf("failed to declare a queue :%s", err)
     }
 
-    if len(os.Args) < 2 {
-        log.Printf("Usage: %s [binding_key]...", os.Args[0])
-        os.Exit(0)
-    }
+    log.Printf("Binding queue %s to exchange %s with routing key '#'", 
+                q.Name, 
+                agentName)
 
-    for _, s := range os.Args[1:] {
-        log.Printf("Binding queue %s to exchange %s with routing key %s", 
-                    q.Name, "logs_topic", s)
-        err = ch.QueueBind(
-            q.Name,         // queue name
-            s,              // routing key
-            "logs_topic",   // exchange
-            false,
-            nil,
-        )
-        if err != nil {
-            log.Fatalf("failed to bind a queue: %s", err)
-        }
-
+    err = ch.QueueBind(
+        q.Name,         // queue name
+        "#",            // routing key
+        "logs_topic",   // exchange
+        false,
+        nil,
+    )
+    if err != nil {
+        log.Fatalf("failed to bind a queue: %s", err)
     }
 
     msgs, err := ch.Consume(
@@ -91,7 +147,7 @@ func main() {
     go func() {
         for d := range msgs {
             log.Printf(" [x] receive prompt %s", d.Body)
-            modelResp, err := m.Prompt(d.Body)
+            modelResp, err := agent.Model.Prompt(d.Body)
             if err != nil {
                 log.Printf(" [x] model failed to generate a response: %s", err)
             }

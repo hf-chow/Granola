@@ -8,14 +8,17 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 )
 
-func ServeOllamaModel(name string, stream bool) (Model, error){
+func ServeOllamaModel(name, port string, stream bool) (Model, error){
     err := stopOllama()
     if err != nil {
         return Model{}, err
     }
+
+    os.Setenv("OLLAMA_HOST", fmt.Sprintf("localhost:%s", port))
     cmd := exec.Command("bash", "-c", "ollama serve")
     err = cmd.Start()
     if err != nil {
@@ -26,7 +29,7 @@ func ServeOllamaModel(name string, stream bool) (Model, error){
 
     m := Model{
         Name:           name,
-        Endpoint:       "http://localhost:11434/api/generate",
+        Endpoint:       fmt.Sprintf("http://localhost:%s/api/generate", port),
         Stream:         false,
     }
 
