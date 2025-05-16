@@ -123,7 +123,7 @@ func main() {
     err = ch.QueueBind(
         q.Name,         // queue name
         "#",            // routing key
-        "logs_topic",   // exchange
+        agent.Topic,   // exchange
         false,
         nil,
     )

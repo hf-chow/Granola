@@ -13,14 +13,9 @@ import (
 )
 
 func ServeOllamaModel(name, port string, stream bool) (Model, error){
-    err := StopOllamaService()
-    if err != nil {
-        return Model{}, err
-    }
-
     os.Setenv("OLLAMA_HOST", fmt.Sprintf("localhost:%s", port))
     cmd := exec.Command("bash", "-c", "ollama serve")
-    err = cmd.Start()
+    err := cmd.Start()
     if err != nil {
         return Model{}, err
     }
