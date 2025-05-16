@@ -80,4 +80,3 @@ func (m *Model) Prompt(p []byte) (ModelResponse, error) {
     }
     return modelResp, nil
 }
-

@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
-    "fmt"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -11,7 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hf-chow/tofu/internal/agent"
+	agent "github.com/hf-chow/tofu/internal/agent"
+	model "github.com/hf-chow/tofu/internal/model"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -90,12 +91,16 @@ func main() {
                 return 
             default:
                 input := strings.TrimSpace(scanner.Text())
-                decision := agent.Orchestrate([]byte(input))
+                outcome, err := agent.Orchestrate([]byte(input))
+                if err != nil {
+                    log.Fatalf("failed to orchestrate task: %s", err)
+                }
+                fmt.Println(outcome)
                 fmt.Print("> ")
             }
         }
     }()
-
-    topic, prompt := parse()
-    publish(topic, prompt, ch)
+    <-sigChan
+    log.Println("Shutting down server...")
+    model.StopOllamaService()
 }

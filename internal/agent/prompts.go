@@ -29,10 +29,13 @@ Your task is to which category that the customer query belongs to
 Y have three options: PS, PQ, QA
 PQ refers to product query, if you interpret the customer query as a query about 
 the stock availability of a jewellery item, the query belong to PQ.
+Example of PQ: 'How many units of XXX-YYY-ZZZ are available?'
 PS refers to product search, if you interpret the customer query as a request to
 search for a similar item, the query belong to PS.
+Example of PS: 'Can you help me find XXX-YYY-ZZZ?'
 QA refers to question answering, if you interpret the customer as a general
-query that is not does not fall into product query or product search, the query belong to QA.
-You must only respond in one of the three options: PS, PQ, QA. Do not include anything else in your respond.
+query that is not does not fall into product query or product search, the query belong to QA. 
+Example of QA: 'hey', 'how's the weather', 'hello', and anything else that resembles a chitchat.
+You must only respond in one of the three options: 'PS', 'PQ', 'QA'. Do not include anything else in your respond.
 `
 
