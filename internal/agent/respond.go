@@ -1,7 +1,7 @@
 package agent
 
 import (
-    "fmt"
+	"fmt"
 
 	model "github.com/hf-chow/tofu/internal/model"
 )
@@ -19,5 +19,3 @@ func (a *Agent) Respond(p []byte) (model.ModelResponse, error) {
     }
     return modelResp, err
 }
-
-
