@@ -9,6 +9,7 @@ import (
 
 	agent "github.com/hf-chow/tofu/internal/agent"
 	model "github.com/hf-chow/tofu/internal/model"
+	"github.com/hf-chow/tofu/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -134,12 +135,12 @@ func main() {
                 case "pq":
                     agent.SendDown(
                         []byte(modelResp.Response),
-                        "quest_ans",
+                        routing.AgentQATopic,
                     )
                 case "ps":
                     agent.SendDown(
                         []byte(modelResp.Response),
-                        "prod_query",
+                        routing.AgentPQTopic,
                     )
                 }
             case <- shutdown:

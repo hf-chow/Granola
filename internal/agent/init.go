@@ -5,6 +5,7 @@ import (
 	"log"
 
 	model "github.com/hf-chow/tofu/internal/model"
+	"github.com/hf-chow/tofu/internal/routing"
 	"github.com/rabbitmq/amqp091-go"
 )
 
@@ -16,13 +17,13 @@ func InitAgent(name, port string, ch *amqp091.Channel) (*Agent, error){
         topic = ""
     case "qa":
         log.Println("Initializing QA Agent")
-        topic = "quest_ans"
+        topic = routing.AgentQATopic
     case "pq":
         log.Println("Initializing PQ Agent")
-        topic = "prod_query"
+        topic = routing.AgentPQTopic
     case "ps":
         log.Println("Initializing PS Agent")
-        topic = "prod_search"
+        topic = routing.AgentPSTopic
     default:
         log.Fatalf("Valid as [qa, pq, ps, or]")
     }
