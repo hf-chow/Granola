@@ -27,7 +27,6 @@ func ServeOllamaModel(name, port string, stream bool) (Model, error){
         Endpoint:       fmt.Sprintf("http://localhost:%s/api/generate", port),
         Stream:         false,
     }
-
     return m, nil
 }
 
@@ -62,6 +61,7 @@ func (m *Model) Prompt(p []byte) (ModelResponse, error) {
         return ModelResponse{}, err
     }
     buf := bytes.NewBuffer(dat)
+    log.Printf(m.Endpoint)
     resp, err := http.Post(m.Endpoint, "application/json", buf)
     if err != nil {
         return ModelResponse{}, err

@@ -37,11 +37,10 @@ func main() {
     }
     defer ch.Close()
 
-    agent, err := agent.InitAgent("or", "11111")
+    agent, err := agent.InitAgent("or", "11111", ch)
     if err != nil {
         log.Fatalf("failed initialize agent %s: %s", agent.Name, err)
     }
-    agent.Channel = ch
 
     shutdown := make(chan struct{})
     sigChan := make(chan os.Signal, 1)

@@ -1,28 +1,28 @@
 package agent
 
 import (
-    "fmt"
-    "log"
+	"fmt"
+	"log"
 
-    model "github.com/hf-chow/tofu/internal/model"
+	model "github.com/hf-chow/tofu/internal/model"
+	"github.com/rabbitmq/amqp091-go"
 )
 
-func InitAgent(name, port string) (Agent, error){
-    var a Agent
-
+func InitAgent(name, port string, ch *amqp091.Channel) (*Agent, error){
+    var topic string
     switch name {
     case "or":
         log.Println("Initializing OR Agent")
-        a.Topic = ""
+        topic = ""
     case "qa":
         log.Println("Initializing QA Agent")
-        a.Topic = "quest_ans"
+        topic = "quest_ans"
     case "pq":
         log.Println("Initializing PQ Agent")
-        a.Topic = "prod_query"
+        topic = "prod_query"
     case "ps":
         log.Println("Initializing PS Agent")
-        a.Topic = "prod_search"
+        topic = "prod_search"
     default:
         log.Fatalf("Valid as [qa, pq, ps, or]")
     }
@@ -32,27 +32,32 @@ func InitAgent(name, port string) (Agent, error){
     m, err := model.ServeOllamaModel("gemma3:1b", port, false)
     if err != nil {
         log.Fatalf("failed to serve model %s: %s", m.Name, err)
-        return a, err
+        return &Agent{}, err
     }
 
-    a.Name = name
-    a.Model = m
-    a.setContext()
+    a := &Agent{
+        Name:           name,
+        Topic:          topic,
+        ContextPrompt:  getContext(name),
+        Channel:        ch,
+        Model:          m,
+    }
 
     log.Printf(" [*] Serving model %s on endpoint %s", m.Name, m.Endpoint)
 
     return a, nil
 }
 
-func (a *Agent) setContext() {
-    switch a.Name {
+func getContext(name string) string{
+    switch name {
     case "or":
-        a.ContextPrompt = ORContextPrompt
+        return ORContextPrompt
     case "qa":
-        a.ContextPrompt = QAContextPrompt
+        return QAContextPrompt
     case "ps":
-        a.ContextPrompt = PSContextPrompt
+        return PSContextPrompt
     case "pq":
-        a.ContextPrompt = PQContextPrompt
+        return PQContextPrompt
     }
+    return ORContextPrompt 
 }

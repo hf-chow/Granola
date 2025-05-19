@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	model "github.com/hf-chow/tofu/internal/model"
+	"github.com/hf-chow/tofu/internal/pubsub"
 )
 
 func (a *Agent) Respond(p []byte) (model.ModelResponse, error) {
@@ -18,4 +19,12 @@ func (a *Agent) Respond(p []byte) (model.ModelResponse, error) {
         return model.ModelResponse{}, err
     }
     return modelResp, err
+}
+
+func (a *Agent) SendDown(p []byte, topic string){
+     pubsub.PublishText(
+        topic,
+        p,
+        a.Channel,
+    )
 }

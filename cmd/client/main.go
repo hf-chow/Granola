@@ -40,12 +40,6 @@ func parse() (string, string) {
 }
 
 func main() {
-    agentName, agentPort := parse()
-    agent, err := agent.InitAgent(agentName, agentPort)
-    if err != nil {
-        log.Fatalf("failed initialize agent %s: %s", agentName, err)
-    }
-
     conn, err := amqp.Dial(connString)
     if err != nil {
         log.Fatalf("failed to connect to Rabbitmq: %s", err)
@@ -57,6 +51,12 @@ func main() {
         log.Fatalf("failed to create a channel: %s", err)
     }
     defer ch.Close()
+
+    agentName, agentPort := parse()
+    agent, err := agent.InitAgent(agentName, agentPort, ch)
+    if err != nil {
+        log.Fatalf("failed initialize agent %s: %s", agentName, err)
+    }
 
     err = ch.ExchangeDeclare(
         agent.Topic,    // name
@@ -90,7 +90,7 @@ func main() {
     err = ch.QueueBind(
         q.Name,         // queue name
         "#",            // routing key
-        agent.Topic,   // exchange
+        agent.Topic,    // exchange
         false,
         nil,
     )
@@ -130,6 +130,18 @@ func main() {
                     continue
                 }
                 log.Printf(" [x] model response: %s", modelResp.Response)
+                switch agent.Name{
+                case "pq":
+                    agent.SendDown(
+                        []byte(modelResp.Response),
+                        "quest_ans",
+                    )
+                case "ps":
+                    agent.SendDown(
+                        []byte(modelResp.Response),
+                        "prod_query",
+                    )
+                }
             case <- shutdown:
                 log.Println("Shutting down consumer...")
                 return
