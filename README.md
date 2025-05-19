@@ -1,9 +1,16 @@
 # Granola
 
-An AI Agent Framework implemented with Go and RabbitMQ with zero dependencies.
+An event-driven AI agent framework implemented with Go and RabbitMQ with no other dependencies besides RabbitMQ and Docker.
+Designed for high-level abstraction to orchestrate multiple agents. 
 Support locally hosted LLM with vLLM and Ollama.
 
-#  PoC application comprises four agents
+# Prerequisite
+- Docker
+- RabbitMQ 
+
+# Quick Start
+- Run `./rabbit.sh start` to start the RabbitMQ in the background.
+
 ## Topics
 - `request`
 - `quest_ans`
