@@ -72,10 +72,10 @@ func main() {
     }
 
     q, err := ch.QueueDeclare(
-        "",             // name
+        agent.Topic,    // name
         false,          // duarable
         false,          // delete when unused
-        true,           // exclusive
+        false,          // exclusive
         false,          // no-wait
         nil,            // arguments
     )
@@ -149,7 +149,7 @@ func main() {
         }
     }()
 
-    log.Printf(" [*] Waiting for logs. To exit press CTRL+C")
+    log.Printf(" [*] Waiting for prompts. To exit press CTRL+C")
     <- sigChan
 
     log.Printf("Recieved interrupt, shutting down...")

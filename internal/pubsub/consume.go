@@ -9,21 +9,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Acktype int
-
-type SimpleQueueType int
-
-const (
-	SimpleQueueDurable SimpleQueueType = iota
-	SimpleQueueTransient
-)
-
-const (
-	Ack Acktype = iota
-	NackDiscard
-	NackRequeue
-)
-
 func SubscribeJSON[T any](
 	conn *amqp.Connection,
 	exchange,

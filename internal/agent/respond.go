@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"fmt"
+	//"fmt"
 
 	model "github.com/hf-chow/tofu/internal/model"
 	"github.com/hf-chow/tofu/internal/pubsub"
@@ -13,7 +13,7 @@ func (a *Agent) Respond(p []byte) (model.ModelResponse, error) {
     "Here is the user query: \n" + string(p) + "\n" +
     "Please reply with the given context\n"
 
-    fmt.Printf(" [DEBUG] Prompt: %s", prompt)
+    //fmt.Printf(" [DEBUG] Prompt: %s", prompt)
     modelResp, err := a.Model.Prompt([]byte(prompt))
     if err != nil {
         return model.ModelResponse{}, err
