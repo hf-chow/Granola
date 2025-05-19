@@ -1,5 +1,9 @@
-# tofu
+# Granola
 
+An AI Agent Framework implemented with Go and RabbitMQ with zero dependencies.
+Support locally hosted LLM with vLLM and Ollama.
+
+#  PoC application comprises four agents
 ## Topics
 - `request`
 - `quest_ans`
