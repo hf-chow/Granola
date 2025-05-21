@@ -22,10 +22,18 @@ const (
 
 func (d DeviceType) Validate() error {
     switch d {
-    case DeviceGPU, DeviceCPU:
+    case DeviceGPU, DeviceCPU: 
         return nil
     default:
         return errors.New("invalid device type: %s, supported types are [cpu, gpu]")
+    }
+}
+
+func NewVLLMModel(name, port string, device DeviceType) *VLLMModel {
+    return &VLLMModel{
+        Name:    name,
+        Port:    port,
+        Device:  device,
     }
 }
 
@@ -89,4 +97,8 @@ func (m *VLLMModel) Stop() error {
         return err
     }
     return nil
+}
+
+func (m *VLLMModel) GetModelInfo() string {
+    return m.Name
 }

@@ -18,6 +18,14 @@ type OllamaModel struct {
     Stream      bool
 }
 
+func NewOllamaModel(name, port string, stream bool) *OllamaModel {
+    return &OllamaModel{
+        Name:       name,
+        Endpoint:   fmt.Sprintf("localhost:%s", port),
+        Stream:     stream,
+    }
+}
+
 func (m *OllamaModel) Start() error {
     os.Setenv("OLLAMA_HOST", m.Endpoint)
     cmd := exec.Command("bash", "-c", "ollama serve")
@@ -74,6 +82,9 @@ func (m *OllamaModel) Generate(prompt string) (string, error) {
     return modelResp.Response, nil
 }
 
+func (m *OllamaModel) GetModelInfo() string { 
+    return m.Name
+}
 
 func pullOllamaModel(name string) error {
     cmd := exec.Command("bash", "-c", fmt.Sprintf("ollama pull %s", name))

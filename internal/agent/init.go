@@ -9,7 +9,7 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 )
 
-func InitAgent(name, port string, ch *amqp091.Channel) (*Agent, error){
+func InitAgent(name string, m model.Model, ch *amqp091.Channel) (*Agent, error){
     var topic string
     switch name {
     case "or":
@@ -30,21 +30,15 @@ func InitAgent(name, port string, ch *amqp091.Channel) (*Agent, error){
 
     fmt.Println("Starting a client...")
 
-    m, err := model.ServeOllamaModel("gemma3:1b", port, false)
-    if err != nil {
-        log.Fatalf("failed to serve model %s: %s", m.Name, err)
-        return &Agent{}, err
-    }
-
     a := &Agent{
-        Name:           name,
+        Name:           m.GetModelInfo(),
         Topic:          topic,
         ContextPrompt:  getContext(name),
         Channel:        ch,
         Model:          m,
     }
 
-    log.Printf(" [*] Serving model %s on endpoint %s", m.Name, m.Endpoint)
+    log.Printf(" [*] Serving model %s", m.GetModelInfo())
 
     return a, nil
 }

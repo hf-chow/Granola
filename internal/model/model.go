@@ -4,6 +4,7 @@ type Model interface {
     Generate(prompt string) (string, error)
     Start() error
     Stop() error
+    GetModelInfo() string
 }
 
 type ModelResponse interface {

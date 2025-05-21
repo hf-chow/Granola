@@ -37,7 +37,13 @@ func main() {
     }
     defer ch.Close()
 
-    agent, err := agent.InitAgent("or", "11111", ch)
+    models := []model.Model{
+        model.NewOllamaModel("gemma3:1b", "11111", false),
+        model.NewVLLMModel("gemma3:1b", "11112", "cpu"),
+    }
+
+
+    agent, err := agent.InitAgent("or", ch)
     if err != nil {
         log.Fatalf("failed initialize agent %s: %s", agent.Name, err)
     }
