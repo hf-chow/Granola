@@ -1,11 +1,5 @@
 package model
 
-type Model struct {
-	Name	            string
-    Endpoint            string
-    Stream              bool
-}
-
 type OllamaModelRequest struct {
     Model               string                      `json:"model"`
     Prompt              string                      `json:"prompt"`

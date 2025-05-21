@@ -7,24 +7,24 @@ import (
 	"github.com/hf-chow/tofu/internal/pubsub"
 )
 
-func (a *Agent) Respond(p []byte) (model.ModelResponse, error) {
+func (a *Agent) Respond(p []byte) (string, error) {
     context := a.ContextPrompt
     prompt := "Here is the context:\n" + context + "\n" +
     "Here is the user query: \n" + string(p) + "\n" +
     "Please reply with the given context\n"
 
     //fmt.Printf(" [DEBUG] Prompt: %s", prompt)
-    modelResp, err := a.Model.Prompt([]byte(prompt))
+    modelResp, err := model.Prompt(prompt, a.Model)
     if err != nil {
-        return model.ModelResponse{}, err
+        return "", err
     }
     return modelResp, err
 }
 
-func (a *Agent) SendDown(p []byte, topic string){
+func (a *Agent) SendDown(prompt, topic string){
      pubsub.PublishText(
         topic,
-        p,
+        []byte(prompt),
         a.Channel,
     )
 }

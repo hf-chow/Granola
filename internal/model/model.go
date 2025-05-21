@@ -1,8 +1,8 @@
 package model
 
-type ModelProvider interface {
+type Model interface {
     Generate(prompt string) (string, error)
-    GetModelInfo() (ModelInfo, error)
+    Start() error
     Stop() error
 }
 
@@ -18,5 +18,10 @@ type ModelInfo struct {
     Stream      bool
 }
 
-func ServeModel(m ModelProvider) (Model, error)
-func StopModel(m ModelProvider) error
+func Prompt(prompt string, m Model) (string, error) {
+    resp, err := m.Generate(prompt)
+    if err != nil {
+        return "", err
+    }
+    return resp, nil
+}
