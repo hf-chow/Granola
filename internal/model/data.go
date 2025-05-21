@@ -6,13 +6,13 @@ type Model struct {
     Stream              bool
 }
 
-type ModelRequest struct {
+type OllamaModelRequest struct {
     Model               string          `json:"model"`
     Prompt              string          `json:"prompt"`
     Stream              bool            `json:"stream"`
 }
 
-type ModelResponse struct {
+type OllamaModelResponse struct {
 	Model               string          `json:"model"`
 	CreatedAt           string          `json:"created_at"`
 	Response            string          `json:"response"`
@@ -26,3 +26,7 @@ type ModelResponse struct {
 	EvalDuration        int             `json:"eval_duration"`
 }
 
+type VLLMModelRequest struct {
+    Model               string          `json:"model"`
+    Prompt              string          `json:"prompt"`
+}
