@@ -1,72 +1,92 @@
 package model
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
 	"os"
 	"os/exec"
 )
 
-func ServeVLLMModel(name, port string, stream bool) (Model, error){
-    os.Setenv("OLLAMA_HOST", fmt.Sprintf("localhost:%s", port))
-    cmd := exec.Command("bash", "-c", "ollama serve")
-    err := cmd.Start()
-    if err != nil {
-        return Model{}, err
-    }
-    cmd = exec.Command("bash", fmt.Sprintf("ollama run %s", name))
-    err = cmd.Run()
-
-    m := Model{
-        Name:           name,
-        Endpoint:       fmt.Sprintf("http://localhost:%s/api/generate", port),
-        Stream:         false,
-    }
-    return m, nil
+type VLLMModel struct {
+    Name        string
+    Port        string
+    Device      DeviceType
 }
 
-func StopVLLMService() error {
-    cmd := exec.Command("bash", "-c", "sudo systemctl stop ollama.service")
-    err := cmd.Run()
-    if err != nil {
-        return errors.New(fmt.Sprintf("failed to stop ollama: %s", err))
+type DeviceType string 
+
+const (
+    DeviceCPU DeviceType = "cpu"
+    DeviceGPU DeviceType = "gpu"
+)
+
+func (d DeviceType) Validate() error {
+    switch d {
+    case DeviceGPU, DeviceCPU:
+        return nil
+    default:
+        return errors.New("invalid device type: %s, supported types are [cpu, gpu]")
     }
-    log.Println("Ollama stopped successfully")
+}
+
+func (m *VLLMModel) Start() error {
+    hfToken := os.Getenv("HUGGING_FACE_HUB_TOKEN")
+    if hfToken == "" {
+        return errors.New("missing HuggingFace Hub token in environment variable " +
+        "use `export HUGGING_FACE_HUB_TOKEN=<your HuggingFace Hub token>` to set " +
+        "your token to run the model with vLLM")
+    }
+    switch m.Device {
+    case DeviceCPU:
+        cmd := exec.Command(
+            "docker build -f docker/Dockerfile.cpu --tag vllm --target vlllm-openai .",
+        )
+        err := cmd.Run()
+        if err != nil {
+            return err
+        }
+        cmd = exec.Command(
+            "docker", 
+            fmt.Sprintf("run --name=vllm --rm --privileged=true -p %s:8000", m.Port),
+            fmt.Sprintf("--env 'HUGGING_FACE_HUB_TOKEN=%s'", hfToken),
+            fmt.Sprintf("vllm --model=%s", m.Name),
+        )
+        err = cmd.Run()
+        if err != nil {
+            return err
+        }
+
+    case DeviceGPU:
+        cmd := exec.Command(
+            "DOCKER_BUILDKIT=1 docker build . --target vllm-openai --tag vllm --file docker/Dockerfile",
+        )
+        err := cmd.Run()
+        if err != nil {
+            return err
+        }
+        cmd = exec.Command(
+            "docker", 
+            fmt.Sprintf("run --name=vllm --rm --privileged=true -p %s:8000", m.Port),
+            fmt.Sprintf("--env 'HUGGING_FACE_HUB_TOKEN=%s'", hfToken),
+            fmt.Sprintf("vllm --model=%s", m.Name),
+        )
+        err = cmd.Run()
+        if err != nil {
+            return err
+        }
+    default:
+        return errors.New("invalid device type: %s, supported types are [cpu, gpu]")
+    }
     return nil
 }
 
-func (m *Model) PromptVLLM(p []byte) (ModelResponse, error) {
-    log.Print(string(p))
-    dat, err := json.Marshal(
-        ModelRequest{
-            Model:      m.Name,
-            Prompt:     string(p),
-            Stream:     m.Stream,
-        })
+func (m *VLLMModel) Stop() error {
+    cmd := exec.Command(
+        "docker stop vllm",
+    )
+    err := cmd.Run() 
     if err != nil {
-        return ModelResponse{}, err
+        return err
     }
-    buf := bytes.NewBuffer(dat)
-    log.Printf(m.Endpoint)
-    resp, err := http.Post(m.Endpoint, "application/json", buf)
-    if err != nil {
-        return ModelResponse{}, err
-    }
-    defer resp.Body.Close()
-    body, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return ModelResponse{}, err
-    }
-    var modelResp ModelResponse
-    err = json.Unmarshal(body, &modelResp)
-    if err != nil {
-        log.Printf("failed to unmarshal model response, %s", err)
-        return ModelResponse{}, err
-    }
-    return modelResp, nil
+    return nil
 }
