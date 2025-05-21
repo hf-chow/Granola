@@ -22,7 +22,12 @@ type OllamaModelResponse struct {
 
 type OpenAIModelRequest struct {
     Model               string                      `json:"model"`
-    Prompt              string                      `json:"prompt"`
+    Messages            []OpenAIModelMessages       `json:"messages"`
+}
+
+type OpenAIModelMessages struct {
+    Role                string                      `json:"user"`
+    Content             string                      `json:"content"`
 }
 
 type OpenAIModelResponse struct {

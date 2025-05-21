@@ -1,8 +1,13 @@
 package model
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"os"
 	"os/exec"
 )
@@ -97,6 +102,38 @@ func (m *VLLMModel) Stop() error {
         return err
     }
     return nil
+}
+
+func (m *VLLMModel) Generate(prompt string) (string, error) {
+    var msgs []OpenAIModelMessages
+    msg :=OpenAIModelMessages {
+            Role:       "user",
+            Content:    prompt,
+        }
+    msgs = append(msgs, msg)
+    dat, err := json.Marshal(
+        OpenAIModelRequest{
+            Model:      m.GetModelInfo(),
+            Messages:   msgs,
+        })
+    buf := bytes.NewBuffer(dat)
+    resp, err := http.Post(fmt.Sprintf("http://localhost:%s", m.Port), "application/json", buf)
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return "", err
+    }
+    var modelResp OllamaModelResponse
+    err = json.Unmarshal(body, &modelResp)
+    if err != nil {
+        log.Printf("failed to unmarshal model response, %s", err)
+        return modelResp.Response, err
+    }
+    return modelResp.Response, nil
+
 }
 
 func (m *VLLMModel) GetModelInfo() string {
