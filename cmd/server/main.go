@@ -14,6 +14,18 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+func parse() string {
+    if len(os.Args) < 1 {
+        log.Printf("Usage: %s [model_provider]...", os.Args[0])
+        os.Exit(0)
+    }
+
+    if (os.Args[1] != "vllm-cpu" && os.Args[1] != "ollama") {
+        log.Println("Valid model provider: [ollama, vllm-cpu]")
+        os.Exit(0)
+    }
+    return os.Args[1]
+}
 func makeBody(args []string) string {
     var s string
     if (len(args) < 2) || os.Args[1] == "" {
@@ -39,13 +51,26 @@ func main() {
 
     models := []model.Model{
         model.NewOllamaModel("gemma3:1b", "11111", false),
-        model.NewVLLMModel("gemma3:1b", "11111", "cpu"),
+        model.NewVLLMModel("google/gemma-3-1b-it", "11111", "cpu"),
     }
 
-    // For testing
-    m := models[0]
-    m.Start()
+    var m model.Model
+    provider := parse()
+    if provider == "ollama" {
+        m := models[0]
+        err = m.Start()
+        if err != nil {
+            log.Fatalf("failed to start model: %s", err)
+        }
 
+    } else if provider == "vllm-cpu" {
+        m := models[1]
+        err = m.Start()
+        if err != nil {
+            log.Fatalf("failed to start model: %s", err)
+        }
+    }
+    
     agent, err := agent.InitAgent("or", m, ch)
     if err != nil {
         log.Fatalf("failed initialize agent %s: %s", agent.Name, err)

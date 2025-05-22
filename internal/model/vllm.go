@@ -52,24 +52,19 @@ func (m *VLLMModel) Start() error {
     switch m.Device {
     case DeviceCPU:
         cmd := exec.Command(
-            "docker build -f docker/Dockerfile.cpu --tag vllm --target vlllm-openai .",
+            "docker", 
+            fmt.Sprintf("run --name=vllm -p %s:8000", m.Port),
+            fmt.Sprintf(" --env 'HUGGING_FACE_HUB_TOKEN=%s'", hfToken),
+            fmt.Sprintf(" --ipc=host"),
+            fmt.Sprintf(" vllm/vllm-openai:latest --model=%s", m.Name),
         )
         err := cmd.Run()
         if err != nil {
             return err
         }
-        cmd = exec.Command(
-            "docker", 
-            fmt.Sprintf("run --name=vllm --rm --privileged=true -p %s:8000", m.Port),
-            fmt.Sprintf("--env 'HUGGING_FACE_HUB_TOKEN=%s'", hfToken),
-            fmt.Sprintf("vllm --model=%s", m.Name),
-        )
-        err = cmd.Run()
-        if err != nil {
-            return err
-        }
 
     case DeviceGPU:
+        // Not implemented
         cmd := exec.Command(
             "DOCKER_BUILDKIT=1 docker build . --target vllm-openai --tag vllm --file docker/Dockerfile",
         )
@@ -126,13 +121,13 @@ func (m *VLLMModel) Generate(prompt string) (string, error) {
     if err != nil {
         return "", err
     }
-    var modelResp OllamaModelResponse
+    var modelResp OpenAIModelResponse
     err = json.Unmarshal(body, &modelResp)
     if err != nil {
         log.Printf("failed to unmarshal model response, %s", err)
-        return modelResp.Response, err
+        return "", err
     }
-    return modelResp.Response, nil
+    return modelResp.Output.Content.Text, nil
 
 }
 

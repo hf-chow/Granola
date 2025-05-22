@@ -37,9 +37,7 @@ func InitAgent(name string, m model.Model, ch *amqp091.Channel) (*Agent, error){
         Channel:        ch,
         Model:          m,
     }
-
     log.Printf(" [*] Serving model %s", m.GetModelInfo())
-
     return a, nil
 }
 

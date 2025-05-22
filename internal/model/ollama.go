@@ -21,7 +21,7 @@ type OllamaModel struct {
 func NewOllamaModel(name, port string, stream bool) *OllamaModel {
     return &OllamaModel{
         Name:       name,
-        Endpoint:   fmt.Sprintf("localhost:%s", port),
+        Endpoint:   fmt.Sprintf("http://localhost:%s/api/generate", port),
         Stream:     stream,
     }
 }

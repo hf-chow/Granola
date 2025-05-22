@@ -15,18 +15,23 @@ import (
 
 const connString = "amqp://guest:guest@localhost:5672/"
 
-func parse() (string, string) {
-    if len(os.Args) < 3 {
-        log.Printf("Usage: %s [agent_name] [port]...", os.Args[0])
+func parse() (string, string, string) {
+    if len(os.Args) < 4 {
+        log.Printf("Usage: %s [model_provider] [agent_name] [port]...", os.Args[0])
         os.Exit(0)
     }
 
-    if (os.Args[1] != "qa" && os.Args[1] != "pq" && os.Args[1] != "ps") {
+    if (os.Args[1] != "vllm-cpu" && os.Args[1] != "ollama") {
+        log.Println("Valid model provider: [ollama, vllm-cpu]")
+        os.Exit(0)
+    }
+
+    if (os.Args[2] != "qa" && os.Args[2] != "pq" && os.Args[2] != "ps") {
         log.Println("Valid agent names: [qa, pq, ps]")
         os.Exit(0)
     }
 
-    portStr := os.Args[2]
+    portStr := os.Args[3]
     port, err := strconv.Atoi(portStr)
     if err != nil {
         log.Println("Port number has to be numeric intergers within [1024 - 49151]")
@@ -37,7 +42,7 @@ func parse() (string, string) {
         log.Println("Valid port numbers: 1024 - 49151")
         os.Exit(0)
     }
-    return os.Args[1], os.Args[2]
+    return os.Args[0], os.Args[1], os.Args[3]
 }
 
 func main() {
@@ -53,8 +58,30 @@ func main() {
     }
     defer ch.Close()
 
-    agentName, agentPort := parse()
-    agent, err := agent.InitAgent(agentName, agentPort, ch)
+    provider, agentName, agentPort := parse()
+
+    models := []model.Model{
+        model.NewOllamaModel("gemma3:1b", agentPort, false),
+        model.NewVLLMModel("google/gemma-3-1b-it", agentPort, "cpu"),
+    }
+
+    var m model.Model
+    if provider == "ollama" {
+        m := models[0]
+        err = m.Start()
+        if err != nil {
+            log.Fatalf("failed to start model: %s", err)
+        }
+
+    } else if provider == "vllm-cpu" {
+        m := models[1]
+        err = m.Start()
+        if err != nil {
+            log.Fatalf("failed to start model: %s", err)
+        }
+    }
+   
+    agent, err := agent.InitAgent(agentName, m, ch)
     if err != nil {
         log.Fatalf("failed initialize agent %s: %s", agentName, err)
     }
