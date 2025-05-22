@@ -16,9 +16,9 @@ func (agent *Agent) Orchestrate(prompt []byte) (OrchestrationOutcome, error) {
         return OrchestrationOutcomeQA, err
     }
 
-    fmt.Printf("[DEBUG] model decision is: %s", modelResp.Response)
+    fmt.Printf("[DEBUG] model decision is: %s", modelResp)
 
-    switch strings.TrimSpace(modelResp.Response) {
+    switch strings.TrimSpace(modelResp) {
     case "QA":
         outcome =  OrchestrationOutcomeQA
         //fmt.Println("[DEBUG] model interpret the query as QA")

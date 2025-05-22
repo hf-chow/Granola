@@ -39,10 +39,14 @@ func main() {
 
     models := []model.Model{
         model.NewOllamaModel("gemma3:1b", "11111", false),
-        model.NewVLLMModel("gemma3:1b", "11112", "cpu"),
+        model.NewVLLMModel("gemma3:1b", "11111", "cpu"),
     }
 
-    agent, err := agent.InitAgent("or", ch)
+    // For testing
+    m := models[0]
+    m.Start()
+
+    agent, err := agent.InitAgent("or", m, ch)
     if err != nil {
         log.Fatalf("failed initialize agent %s: %s", agent.Name, err)
     }
@@ -72,5 +76,5 @@ func main() {
     }()
     <-sigChan
     log.Println("Shutting down server...")
-    model.StopOllamaService()
+    m.Stop()
 }
